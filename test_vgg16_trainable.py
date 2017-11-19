@@ -42,6 +42,8 @@ with tf.device('/cpu:0'):
     # test classification
     prob = sess.run(vgg.prob, feed_dict={images: batch, train_mode: False})
     utils.print_prob(prob[0], './gender.txt')
+    utils.print_prob(prob[1], './gender.txt')
+    utils.print_prob(prob[2], './gender.txt')
 
     # simple 1-step training
     for i in range(10):
