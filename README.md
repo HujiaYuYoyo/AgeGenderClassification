@@ -1,4 +1,5 @@
-# AgeGenderClassification
+# Reinforcement Learning Approach to Age and Gender Classification
+This repo introduces application of optimal local basis - a RL approach to age and gender classification
 
 please make sure data/ is in the same directory as all these files
 - move data.zip inside of code/
@@ -20,7 +21,7 @@ inputdata.py - loads labels and convert to json and store in memory
 
 test.txt - test file for you to run, taken as an input to OLBmain.py train function
 
-traindataclass.py - organizeds the train and test dataset and samples data for each different size
+traindataclass.py - organizes the train and test dataset and samples data for each different size
 
 OLButils.py - runs pca and kmeans and unit testing the model
 
