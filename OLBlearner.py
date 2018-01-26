@@ -7,19 +7,6 @@ import operator
 import collections
 # from tqdm import tqdm
 
-"""
->>> X = np.array([[1, 2], [1, 4], [1, 0],
-...               [4, 2], [4, 4], [4, 0]])
->>> kmeans = KMeans(n_clusters=2, random_state=0).fit(X)
->>> kmeans.labels_
-array([0, 0, 0, 1, 1, 1], dtype=int32)
->>> kmeans.predict([[0, 0], [4, 4]])
-array([0, 1], dtype=int32)
->>> kmeans.cluster_centers_
-array([[ 1.,  2.],
-       [ 4.,  2.]])
-"""
-
 
 class OLBlearner(object):
 	def __init__(self, alpha, gamma, numPCs, weights = None):
@@ -50,11 +37,6 @@ class OLBlearner(object):
 		for i in range(len(gender)):
 			w_gender_i = gender[i]
 			w_age_i = age[i]
-			# img_col = images[i]
-			# img_col -= mean_img_col 
-			# img_col = np.reshape(img_col, (224*224, 1))  	
-			# x_i = evectors * img_col
-			# print 'x_i is: ', x_i
 			x_i = weights[:,i]
 			assert x_i.shape == (numPCs, 1)
 			img_row = x_i.T.dot(evectors)
@@ -64,13 +46,11 @@ class OLBlearner(object):
 			# (self, x_i, w_age_i, w_gender_i, T_i, mu, pcs, img_col)
 			self.OLBs.append(olb)
 		print '%s number of OLBs have been added!' % len(self.OLBs)
-		# print [x.w_age_i for x in self.OLBs]
 		return weights, mean_img_col, evectors
 
 
 	def _instantiate_Qtables(self, OLB):
 		temp = []
-		# qtable0 = [0] * self.N
 		qtable0 = np.random.randn(self.N, 1)
 		temp.append(qtable0)
 		qtable1 = [qtable0] * self.N
@@ -85,29 +65,6 @@ class OLBlearner(object):
 	# by h using p_j = diag(x_j, h)
 	# weights (topk, 146) evectors (topk, 224*224)
 	def _projectall(self, OLB):
-		# eigenvec = OLB.pcs # all eigenvectors of that OLB
-		# temp = [False] * len(OLB.h)
-		# for i in range(len(OLB.h)):
-		# 	if OLB.h[i] == 1:
-		# 		temp[i] = True
-		# eigenvec = eigenvec[temp] 
-		# print 'shape of OLB.eigenvectors is ', eigenvec.shape
-		# # now we have to project all other olbs into pcs defined by pcs
-		# projected = []
-		# for olb in self.OLBs:
-		# 	img_col = olb.img_col
-		# 	S = eigenvec * img_col
-		# 	# print 'S shape is ', S.shape
-		# 	# print 'S is ', S
-		# 	S = np.reshape(S, (1, -1))
-		# 	if len(projected) == 0:
-		# 		projected = S
-		# 	else:
-		# 		projected = np.vstack((projected, S))
-		# # projected = np.array(projected)
-		# assert projected.shape == (len(self.OLBs), len(eigenvec))
-		# # projected = np.reshape(projected, (len(self.OLBs), -1))
-		# print 'projected shape after reshaping is ', projected.shape
 		h = np.diag(OLB.h)
 		assert h.shape == (self.numPCs, self.numPCs) # shape is (topk, 1)
 		projected = np.dot(self.weights.T, h) 
@@ -118,8 +75,6 @@ class OLBlearner(object):
 	# this function returns reward after kmeans by summing up the correctly classified labels and 
 	# minus the incorrectly classified ones
 	def _getreward(self, labels_, param, correctscore = 1, punishscore = 1):
-		# print 'Getting reward of the clustering ...'
-		# print 'labels_ look like : ', labels_
 		reward = 0
 		count = 0
 		if param == 'age':
@@ -127,8 +82,6 @@ class OLBlearner(object):
 			gt = [l.strip() for l in open(file_path).readlines()]
 			for i in range(len(self.OLBs)):
 				pred = gt[labels_[i]]
-				# print 'pred', pred
-				# print 'w_age_i', gt[np.argmax(self.OLBs[i].w_age_i)]
 				if gt[np.argmax(self.OLBs[i].w_age_i)] == pred:
 					reward += correctscore
 					count += 1
@@ -139,40 +92,18 @@ class OLBlearner(object):
 			gt = [l.strip() for l in open(file_path).readlines()]
 			for i in range(len(self.OLBs)):
 				pred = gt[labels_[i]]
-				# print 'pred', pred
-				# print 'w_gender_i', gt[np.argmax(self.OLBs[i].w_gender_i)]
 				if gt[np.argmax(self.OLBs[i].w_gender_i)] == pred:
 					reward += 1
 					count += 1
 				else: 
 					reward -= 1	
 		accu = count*1./len(self.OLBs)
-		# print 'reward for this iteration is: ', reward
 		return reward, accu
 
 	# this function updates the cell in the Q_table by looking ahead one step and 
 	# calculates the step with max Q-value and updates the current cell
 	# need to keep track of recently chosen feature as f
 	def _update_Qtable(self, OLB, r): 
-		# if i_0 is None and i_1 is not None:
-		# 	i_0 = i_1
-		# qtable1 = OLB.Q_tables[1]
-		# if sum(OLB.h) == 1: # right after picking i_0, qtable1 is used to update qtable0
-		# 	tempmax = float('-inf')
-		# 	for l in range(1, self.N):
-		# 		if qtable1[i_0][l] > tempmax:
-		# 			tempmax = qtable1[i_0][l]
-		# 	OLB.Q_tables[0][i_0] = OLB.Q_tables[0][i_0] + self.alpha * (r + self.gamma * tempmax - OLB.Q_tables[0][i_0])
-		# 	nextfeaturesqval = qtable1[i_0]
-		# else:
-		# 	# update qtable_1
-		# 	tempmax = float('-inf')
-		# 	for l in range(1, self.N):
-		# 		if qtable1[i_1][l] > tempmax:
-		# 			tempmax = qtable1[i_1][l]
-		# 	# print i_0, i_1
-		# 	qtable1[i_0][i_1] = qtable1[i_0][i_1] + self.alpha * (r + self.gamma * tempmax - qtable1[i_0][i_1])
-		# 	nextfeaturesqval = qtable1[i_1]
 		j = sum(OLB.h) - 1
 		if j == 0:
 			qtable1 = OLB.Q_tables[1]
@@ -197,15 +128,11 @@ class OLBlearner(object):
 					tempmax = qtable1[i_1][l]
 			qtable1[i_0][i_1] = qtable1[i_0][i_1] + self.alpha * (r + self.gamma * tempmax - qtable1[i_0][i_1])
 			nextfeaturesqval = qtable1[i_1]
-		# print 'successfully updated q table !'
-		# print 'nextfeatures Q-values length is', len(nextfeaturesqval)
-		# print 'next highest q value is ', max(nextfeaturesqval)
 		return nextfeaturesqval
 
 
 	def _updatefeature(self, OLB, f): 
 		OLB.h[f] = 1
-		# print len(OLB.chosenfbyorder)
 		assert len(OLB.chosenfbyorder) <= len(OLB.h)
 		OLB.chosenfbyorder.append(f)
 
