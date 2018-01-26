@@ -37,14 +37,11 @@ def _PCA(topk, m, images): # taking in m batch of face images
 	assert images.shape == (m, 224*224)
 	L = images.T # each column is an image vector now shape is (50176 x m)
 	mean_img_col = np.mean(L, axis=1) # sample mean of each feature vector 
-	# print 'mean_img_col shape is ', mean_img_col.shape
 	for j in range(m):   # subtract each column vector from its feature sample mean for all training images
 		L[:, j] -= mean_img_col
 	C = np.matrix(L.transpose()) * np.matrix(L) # m x m
 	C /= m
-	# print 'covariance matrix dimension is ', C.shape
 	evalues, evectors = np.linalg.eig(C)   # m x m  
-	# print evalues[:15]                     
 	sort_indices = evalues.argsort()[::-1]  # getting their correct order - decreasing
 	evalues = evalues[sort_indices]       
 	evectors = evectors[sort_indices] 
@@ -55,12 +52,9 @@ def _PCA(topk, m, images): # taking in m batch of face images
 
 	evectors = evectors.transpose() # change eigenvectors from rows to columns
 	evectors = L * evectors  # left multiply to get the correct evectors (50176, m)
-	# print 'correct evectors shape is ', evectors.shape
 	norms = np.linalg.norm(evectors, axis=0) # find the norm of each eigenvector
 	evectors = evectors / norms # normalize all eigenvectors
 	weights = evectors.transpose() * L # computing the weights (numPCs, m)
-	# print 'shape of evectors and L is: ', evectors.shape, L.shape 
-	# print 'shape of weights (evectors * L) is ', weights.shape
 	with open('./finalresult/weights.txt','w') as f:
 		np.savetxt(f, weights)
 	with open('./finalresult/meanimg.txt', 'w') as f:
@@ -110,12 +104,8 @@ def loadtraindatabatch(batchsize, traindataconverted):
 
 def test(learner, train, test, displayk, saveimg = './finalresult/after.png'):
 	# {userid, imageid, gender, genderlabel, age, agelabel, imagepath}
-	# print 'train data looks like ', len(train), train[0]
 	testimg = random.choice(train)
 	weights, mean_img_col, evectors = learner.weights, learner.mean_img_col, learner.evectors
-	# print weights.shape
-	# print mean_img_col.shape
-	# print evectors.shape
 	# show the average face by adding up all the eigenfaces with weight = 1
 	avgface = np.matrix.sum(evectors, axis = 0)
 	avgfaceimg = np.reshape(avgface, (224,224))
@@ -201,8 +191,6 @@ def testeigenface(learner, train, test, param, outputfile = './finalresult/eigen
 		img = np.reshape(img, (-1,1)) # column vector
 		img -= np.reshape(learner.mean_img_col,(-1,1))
 		S = learner.evectors * img
-		# print 'S shape is ', S.shape
-		# assert S.shape == (learner.m, 1)
 
 		diff = learner.weights - S # finding the min ||W_j - S||
 		norms = np.linalg.norm(diff, axis=0)
